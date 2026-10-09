@@ -1,17 +1,16 @@
+
 name: Hello World CI
 
 on:
-workflow_dispatch:
-push:
+  workflow_dispatch:
+  push:
 
 jobs:
-test:
-runs-on: ubuntu-latest
-steps:
-- name: Checkout repository
-uses: actions/checkout@v4
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-```
-  - name: 24f2007267@ds.study.iitm.ac.in
-    run: echo "Hello, world!"
-```
+      - name: 24f2007267@ds.study.iitm.ac.in
+        run: echo "Hello, world!"
