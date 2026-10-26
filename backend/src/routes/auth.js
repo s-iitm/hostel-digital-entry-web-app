@@ -125,6 +125,36 @@ router.get(
   })
 );
 
+// Full profile of the signed-in student or warden (read-only), including their hostel.
+router.get(
+  '/profile',
+  auth(),
+  wrap(async (req, res) => {
+    const { role, id } = req.user;
+    const hostelCols = `h.id AS hostel_id, h.name AS hostel_name, h.address AS hostel_address,
+            to_char(h.gate_closure_time, 'HH24:MI:SS') AS gate_closure_time`;
+    const sql =
+      role === 'student'
+        ? `SELECT s.mis, s.name, s.class, s.room, s.home_address, s.admission_date,
+                  s.phone_no, s.parents_phone_no, s.created_at, ${hostelCols}
+           FROM student s JOIN hostel h ON h.id = s.hostel_id WHERE s.mis = $1`
+        : `SELECT w.id, w.username, w.name, w.mobile_no, ${hostelCols}
+           FROM warden w JOIN hostel h ON h.id = w.hostel_id WHERE w.id = $1`;
+    const { rows } = await query(sql, [id]);
+    const r = rows[0];
+    if (!r) throw new HttpError(401, 'Account no longer exists');
+    const hostel = { id: r.hostel_id, name: r.hostel_name, address: r.hostel_address, gateClosureTime: r.gate_closure_time };
+    const profile =
+      role === 'student'
+        ? {
+            role, mis: r.mis, name: r.name, class: r.class, room: r.room, homeAddress: r.home_address,
+            admissionDate: r.admission_date, phoneNo: r.phone_no, parentsPhoneNo: r.parents_phone_no, hostel,
+          }
+        : { role, id: String(r.id), username: r.username, name: r.name, mobileNo: r.mobile_no, hostel };
+    res.json({ profile });
+  })
+);
+
 // Public: hostel list for the registration form.
 router.get(
   '/hostels',
